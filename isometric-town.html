@@ -8,14 +8,14 @@ The river runs from the north edge to the east edge, so it splits the land into 
 On this map the far bank is the north-east corner. It has 3 houses, at (16,0), (17,1) and (17,3). They reach the hospital only by crossing one of the three bridges. The other 84 houses reach the hospital by road with no bridge. A second hospital on the far bank would satisfy rule 7, but "the hospital" would then no longer be a single building, so it was left out.
 
 The other rules hold:
-1. The river enters at (13,0) on the north edge and leaves at (19,5) on the east edge.
+1. The river enters at (13,0) on the north edge and leaves at (19,5) on the east edge. Bridge tiles count as part of the river.
 2. Exactly 3 bridges, at (13,1), (14,3) and (16,4).
 3. Hospital at (7,6) on the main bank. Fire station at (17,2) on the far bank.
 4. The tallest building is the tower at (10,10), 13 levels high.
 5. The school at (4,10) touches the park.
 6. Houses on both banks.
 7. Partly met, see above.
-8. Ground level rises from the north-east corner toward the south-west corner.
+8. Ground level rises from the north-east corner toward the south-west corner. Raw height includes building floors, so it can dip between neighboring tiles.
 
 In the JSON, height is the top of the tile in levels: ground elevation plus building floors. Water is 0. Bridge decks are 2.
 -->
@@ -50,12 +50,12 @@ In the JSON, height is the top of the tile in levels: ground elevation plus buil
 
 <div id="title" class="panel">
   <h1>Riverside Town</h1>
-  <p>Hover over a tile to inspect it. Cars, smoke and the river keep moving.</p>
+  <p>Hover or tap a tile to inspect it. Cars, smoke and the river keep moving.</p>
   <button id="pause" type="button">Pause</button><button id="night" type="button">Night</button>
 </div>
 
 <div id="legend" class="panel"></div>
-<div id="info" class="panel">Hover over the town to inspect a tile.</div>
+<div id="info" class="panel">Hover or tap the town to inspect a tile.</div>
 
 <script id="map" type="application/json">
 [
@@ -676,7 +676,7 @@ In the JSON, height is the top of the tile in levels: ground elevation plus buil
   function drawTile(x, y, t) {
     const tl = T[x][y], ty = tl.type, h = tl.height, f = FLOORS[ty], g = h - f;
     if (ty === 'river') return drawWater(x, y, t);
-    if (ty === 'bridge') return drawBridge(x, y, h);
+    if (ty === 'bridge') { fillPoly(diamond(x, y, 0), rgb(COL.river)); return drawBridge(x, y, h); }
     box(x, y, 0, g, EARTH, COL[ty]);
     if (ty === 'road') roadMarks(x, y, g);
     if (ty === 'grass' && hash(x, y, 21) < 0.3) {
@@ -713,7 +713,7 @@ In the JSON, height is the top of the tile in levels: ground elevation plus buil
   function drawCar(c) {
     const [ax, ay] = c.a, [bx, by] = c.b;
     const dx = bx - ax, dy = by - ay;
-    const px = ax + 0.5 + dx * c.p - dy * 0.18, py = ay + 0.5 + dy * c.p + dx * 0.18; // drive on the right lane
+    const px = ax + 0.5 + dx * c.p, py = ay + 0.5 + dy * c.p;
     const z = T[ax][ay].height + (T[bx][by].height - T[ax][ay].height) * c.p + 0.12;
     const a = P(px - dx * 0.2, py - dy * 0.2, z), b = P(px + dx * 0.2, py + dy * 0.2, z);
     line([a[0], a[1] + 1.5], [b[0], b[1] + 1.5], raw([0, 0, 0], 0.25), HW * 0.2);
@@ -763,7 +763,9 @@ In the JSON, height is the top of the tile in levels: ground elevation plus buil
 
     const carsAt = new Map();
     for (const c of cars) {
-      const k = c.a[0] * N + c.a[1];
+      // Attach each car to the nearer of its two tiles so it is drawn after both
+      const front = c.a[0] + c.a[1] >= c.b[0] + c.b[1] ? c.a : c.b;
+      const k = front[0] * N + front[1];
       if (!carsAt.has(k)) carsAt.set(k, []);
       carsAt.get(k).push(c);
     }
@@ -775,10 +777,11 @@ In the JSON, height is the top of the tile in levels: ground elevation plus buil
         drawTile(x, y, t);
         const list = carsAt.get(x * N + y);
         if (list) for (const c of list) drawCar(c);
+        // Outline is drawn inside the loop so tiles in front still cover it
+        if (hover && hover[0] === x && hover[1] === y) strokePoly(diamond(x, y, T[x][y].height));
       }
     }
     drawSmoke();
-    if (hover) strokePoly(diamond(hover[0], hover[1], T[hover[0]][hover[1]].height));
     K = 1;
   }
 
@@ -797,9 +800,13 @@ In the JSON, height is the top of the tile in levels: ground elevation plus buil
         const y = s - x;
         if (y < 0 || y >= N) continue;
         const h = T[x][y].height;
+        // A bridge is only a deck above the water, so its side faces start at the deck underside
+        const isBridge = T[x][y].type === 'bridge';
+        const z0 = isBridge ? h - 0.4 : 0;
         if (inPoly(mx, my, diamond(x, y, h)) ||
-            inPoly(mx, my, [P(x, y + 1, 0), P(x + 1, y + 1, 0), P(x + 1, y + 1, h), P(x, y + 1, h)]) ||
-            inPoly(mx, my, [P(x + 1, y, 0), P(x + 1, y + 1, 0), P(x + 1, y + 1, h), P(x + 1, y, h)])) return [x, y];
+            inPoly(mx, my, [P(x, y + 1, z0), P(x + 1, y + 1, z0), P(x + 1, y + 1, h), P(x, y + 1, h)]) ||
+            inPoly(mx, my, [P(x + 1, y, z0), P(x + 1, y + 1, z0), P(x + 1, y + 1, h), P(x + 1, y, h)]) ||
+            (isBridge && inPoly(mx, my, diamond(x, y, 0)))) return [x, y];
       }
     }
     return null;
@@ -811,7 +818,7 @@ In the JSON, height is the top of the tile in levels: ground elevation plus buil
     const key = hover ? hover.join(',') : '';
     if (key === lastKey) return;
     lastKey = key;
-    if (!hover) { info.textContent = 'Hover over the town to inspect a tile.'; return; }
+    if (!hover) { info.textContent = 'Hover or tap the town to inspect a tile.'; return; }
     const [x, y] = hover, tl = T[x][y];
     const lines = [NAMES[tl.type], `Tile (${x}, ${y})`, `Height ${tl.height} levels`];
     if (tl.type === 'house') {
@@ -838,8 +845,10 @@ In the JSON, height is the top of the tile in levels: ground elevation plus buil
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     paused = true; pauseBtn.textContent = 'Play';
   }
-  cv.addEventListener('pointermove', e => { hover = hitTile(e.clientX, e.clientY); showInfo(); });
-  cv.addEventListener('pointerleave', () => { hover = null; showInfo(); });
+  const inspect = e => { hover = hitTile(e.clientX, e.clientY); showInfo(); };
+  cv.addEventListener('pointermove', inspect);
+  cv.addEventListener('pointerdown', inspect); // a tap on a touch screen
+  cv.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') { hover = null; showInfo(); } });
 
   // ---------- loop ----------
   let last = performance.now();
