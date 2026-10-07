@@ -1,0 +1,862 @@
+<!--
+Rule notes for this map
+
+Rule 7 cannot be met in full. Only the three houses on the far bank break it.
+
+The river runs from the north edge to the east edge, so it splits the land into two banks. Rule 6 needs houses on both banks, and rule 3 puts the hospital on one of them. A house on the other bank can only reach the hospital by crossing the river, and the only crossings are bridges. Rule 7 forbids crossing a bridge, so rules 3, 6 and 7 cannot all hold together.
+
+On this map the far bank is the north-east corner. It has 3 houses, at (16,0), (17,1) and (17,3). They reach the hospital only by crossing one of the three bridges. The other 84 houses reach the hospital by road with no bridge. A second hospital on the far bank would satisfy rule 7, but "the hospital" would then no longer be a single building, so it was left out.
+
+The other rules hold:
+1. The river enters at (13,0) on the north edge and leaves at (19,5) on the east edge.
+2. Exactly 3 bridges, at (13,1), (14,3) and (16,4).
+3. Hospital at (7,6) on the main bank. Fire station at (17,2) on the far bank.
+4. The tallest building is the tower at (10,10), 13 levels high.
+5. The school at (4,10) touches the park.
+6. Houses on both banks.
+7. Partly met, see above.
+8. Ground level rises from the north-east corner toward the south-west corner.
+
+In the JSON, height is the top of the tile in levels: ground elevation plus building floors. Water is 0. Bridge decks are 2.
+-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Isometric Town</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0f1d2b; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #e8eef5; }
+  #town { position: fixed; inset: 0; display: block; width: 100%; height: 100%; }
+  .panel { position: fixed; background: rgba(10, 20, 32, 0.8); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 1.45; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+  #title { top: 16px; left: 16px; max-width: 250px; }
+  #title h1 { font-size: 16px; margin: 0 0 6px; }
+  #title p { margin: 0 0 10px; opacity: 0.75; }
+  button { font: inherit; color: inherit; background: #1f3550; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 6px; padding: 6px 12px; cursor: pointer; margin-right: 6px; }
+  button:hover { background: #2a4769; }
+  #legend { bottom: 16px; left: 16px; display: grid; grid-template-columns: auto auto; gap: 4px 14px; }
+  #legend div { display: flex; align-items: center; }
+  #legend span { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 7px; }
+  #info { top: 16px; right: 16px; min-width: 190px; white-space: pre-line; }
+  @media (max-width: 600px) {
+    #title { max-width: calc(100% - 32px); }
+    #legend { display: none; }
+    #info { left: 16px; right: 16px; top: auto; bottom: 16px; }
+  }
+</style>
+</head>
+<body>
+<canvas id="town" aria-label="Animated isometric town map"></canvas>
+
+<div id="title" class="panel">
+  <h1>Riverside Town</h1>
+  <p>Hover over a tile to inspect it. Cars, smoke and the river keep moving.</p>
+  <button id="pause" type="button">Pause</button><button id="night" type="button">Night</button>
+</div>
+
+<div id="legend" class="panel"></div>
+<div id="info" class="panel">Hover over the town to inspect a tile.</div>
+
+<script id="map" type="application/json">
+[
+{"x":0,"y":0,"type":"grass","height":4},
+{"x":1,"y":0,"type":"grass","height":4},
+{"x":2,"y":0,"type":"grass","height":4},
+{"x":3,"y":0,"type":"grass","height":4},
+{"x":4,"y":0,"type":"grass","height":4},
+{"x":5,"y":0,"type":"grass","height":3},
+{"x":6,"y":0,"type":"grass","height":3},
+{"x":7,"y":0,"type":"grass","height":3},
+{"x":8,"y":0,"type":"house","height":5},
+{"x":9,"y":0,"type":"road","height":3},
+{"x":10,"y":0,"type":"grass","height":2},
+{"x":11,"y":0,"type":"grass","height":2},
+{"x":12,"y":0,"type":"house","height":4},
+{"x":13,"y":0,"type":"river","height":0},
+{"x":14,"y":0,"type":"grass","height":2},
+{"x":15,"y":0,"type":"grass","height":1},
+{"x":16,"y":0,"type":"house","height":3},
+{"x":17,"y":0,"type":"grass","height":1},
+{"x":18,"y":0,"type":"grass","height":1},
+{"x":19,"y":0,"type":"grass","height":1},
+{"x":0,"y":1,"type":"grass","height":5},
+{"x":1,"y":1,"type":"grass","height":4},
+{"x":2,"y":1,"type":"grass","height":4},
+{"x":3,"y":1,"type":"grass","height":4},
+{"x":4,"y":1,"type":"grass","height":4},
+{"x":5,"y":1,"type":"grass","height":4},
+{"x":6,"y":1,"type":"grass","height":3},
+{"x":7,"y":1,"type":"grass","height":3},
+{"x":8,"y":1,"type":"grass","height":3},
+{"x":9,"y":1,"type":"road","height":3},
+{"x":10,"y":1,"type":"road","height":3},
+{"x":11,"y":1,"type":"road","height":2},
+{"x":12,"y":1,"type":"road","height":2},
+{"x":13,"y":1,"type":"bridge","height":2},
+{"x":14,"y":1,"type":"road","height":2},
+{"x":15,"y":1,"type":"road","height":2},
+{"x":16,"y":1,"type":"road","height":1},
+{"x":17,"y":1,"type":"house","height":3},
+{"x":18,"y":1,"type":"grass","height":1},
+{"x":19,"y":1,"type":"grass","height":1},
+{"x":0,"y":2,"type":"grass","height":5},
+{"x":1,"y":2,"type":"grass","height":5},
+{"x":2,"y":2,"type":"grass","height":4},
+{"x":3,"y":2,"type":"grass","height":4},
+{"x":4,"y":2,"type":"grass","height":4},
+{"x":5,"y":2,"type":"grass","height":4},
+{"x":6,"y":2,"type":"grass","height":4},
+{"x":7,"y":2,"type":"grass","height":3},
+{"x":8,"y":2,"type":"shop","height":5},
+{"x":9,"y":2,"type":"road","height":3},
+{"x":10,"y":2,"type":"shop","height":5},
+{"x":11,"y":2,"type":"house","height":5},
+{"x":12,"y":2,"type":"house","height":4},
+{"x":13,"y":2,"type":"river","height":0},
+{"x":14,"y":2,"type":"river","height":0},
+{"x":15,"y":2,"type":"road","height":2},
+{"x":16,"y":2,"type":"road","height":2},
+{"x":17,"y":2,"type":"fire_station","height":4},
+{"x":18,"y":2,"type":"grass","height":1},
+{"x":19,"y":2,"type":"grass","height":1},
+{"x":0,"y":3,"type":"grass","height":5},
+{"x":1,"y":3,"type":"grass","height":5},
+{"x":2,"y":3,"type":"grass","height":5},
+{"x":3,"y":3,"type":"grass","height":4},
+{"x":4,"y":3,"type":"grass","height":4},
+{"x":5,"y":3,"type":"grass","height":4},
+{"x":6,"y":3,"type":"grass","height":4},
+{"x":7,"y":3,"type":"grass","height":4},
+{"x":8,"y":3,"type":"grass","height":3},
+{"x":9,"y":3,"type":"road","height":3},
+{"x":10,"y":3,"type":"road","height":3},
+{"x":11,"y":3,"type":"road","height":3},
+{"x":12,"y":3,"type":"road","height":3},
+{"x":13,"y":3,"type":"road","height":2},
+{"x":14,"y":3,"type":"bridge","height":2},
+{"x":15,"y":3,"type":"road","height":2},
+{"x":16,"y":3,"type":"road","height":2},
+{"x":17,"y":3,"type":"house","height":4},
+{"x":18,"y":3,"type":"grass","height":1},
+{"x":19,"y":3,"type":"grass","height":1},
+{"x":0,"y":4,"type":"grass","height":5},
+{"x":1,"y":4,"type":"grass","height":5},
+{"x":2,"y":4,"type":"grass","height":5},
+{"x":3,"y":4,"type":"grass","height":5},
+{"x":4,"y":4,"type":"house","height":6},
+{"x":5,"y":4,"type":"grass","height":4},
+{"x":6,"y":4,"type":"grass","height":4},
+{"x":7,"y":4,"type":"house","height":6},
+{"x":8,"y":4,"type":"house","height":6},
+{"x":9,"y":4,"type":"road","height":3},
+{"x":10,"y":4,"type":"house","height":5},
+{"x":11,"y":4,"type":"house","height":5},
+{"x":12,"y":4,"type":"grass","height":3},
+{"x":13,"y":4,"type":"house","height":5},
+{"x":14,"y":4,"type":"river","height":0},
+{"x":15,"y":4,"type":"river","height":0},
+{"x":16,"y":4,"type":"bridge","height":2},
+{"x":17,"y":4,"type":"river","height":0},
+{"x":18,"y":4,"type":"grass","height":2},
+{"x":19,"y":4,"type":"grass","height":1},
+{"x":0,"y":5,"type":"grass","height":5},
+{"x":1,"y":5,"type":"grass","height":5},
+{"x":2,"y":5,"type":"grass","height":5},
+{"x":3,"y":5,"type":"house","height":7},
+{"x":4,"y":5,"type":"road","height":5},
+{"x":5,"y":5,"type":"road","height":4},
+{"x":6,"y":5,"type":"road","height":4},
+{"x":7,"y":5,"type":"road","height":4},
+{"x":8,"y":5,"type":"road","height":4},
+{"x":9,"y":5,"type":"road","height":4},
+{"x":10,"y":5,"type":"road","height":3},
+{"x":11,"y":5,"type":"road","height":3},
+{"x":12,"y":5,"type":"road","height":3},
+{"x":13,"y":5,"type":"road","height":3},
+{"x":14,"y":5,"type":"road","height":3},
+{"x":15,"y":5,"type":"road","height":2},
+{"x":16,"y":5,"type":"road","height":2},
+{"x":17,"y":5,"type":"river","height":0},
+{"x":18,"y":5,"type":"river","height":0},
+{"x":19,"y":5,"type":"river","height":0},
+{"x":0,"y":6,"type":"grass","height":6},
+{"x":1,"y":6,"type":"grass","height":5},
+{"x":2,"y":6,"type":"grass","height":5},
+{"x":3,"y":6,"type":"grass","height":5},
+{"x":4,"y":6,"type":"grass","height":5},
+{"x":5,"y":6,"type":"house","height":7},
+{"x":6,"y":6,"type":"shop","height":6},
+{"x":7,"y":6,"type":"hospital","height":8},
+{"x":8,"y":6,"type":"house","height":6},
+{"x":9,"y":6,"type":"road","height":4},
+{"x":10,"y":6,"type":"house","height":6},
+{"x":11,"y":6,"type":"grass","height":3},
+{"x":12,"y":6,"type":"house","height":5},
+{"x":13,"y":6,"type":"house","height":5},
+{"x":14,"y":6,"type":"house","height":5},
+{"x":15,"y":6,"type":"grass","height":3},
+{"x":16,"y":6,"type":"house","height":4},
+{"x":17,"y":6,"type":"grass","height":2},
+{"x":18,"y":6,"type":"grass","height":2},
+{"x":19,"y":6,"type":"grass","height":2},
+{"x":0,"y":7,"type":"grass","height":6},
+{"x":1,"y":7,"type":"grass","height":6},
+{"x":2,"y":7,"type":"grass","height":5},
+{"x":3,"y":7,"type":"grass","height":5},
+{"x":4,"y":7,"type":"grass","height":5},
+{"x":5,"y":7,"type":"grass","height":5},
+{"x":6,"y":7,"type":"grass","height":5},
+{"x":7,"y":7,"type":"grass","height":4},
+{"x":8,"y":7,"type":"house","height":6},
+{"x":9,"y":7,"type":"road","height":4},
+{"x":10,"y":7,"type":"house","height":6},
+{"x":11,"y":7,"type":"grass","height":4},
+{"x":12,"y":7,"type":"grass","height":3},
+{"x":13,"y":7,"type":"grass","height":3},
+{"x":14,"y":7,"type":"grass","height":3},
+{"x":15,"y":7,"type":"grass","height":3},
+{"x":16,"y":7,"type":"grass","height":3},
+{"x":17,"y":7,"type":"grass","height":2},
+{"x":18,"y":7,"type":"grass","height":2},
+{"x":19,"y":7,"type":"grass","height":2},
+{"x":0,"y":8,"type":"house","height":8},
+{"x":1,"y":8,"type":"grass","height":6},
+{"x":2,"y":8,"type":"house","height":8},
+{"x":3,"y":8,"type":"house","height":7},
+{"x":4,"y":8,"type":"house","height":7},
+{"x":5,"y":8,"type":"shop","height":7},
+{"x":6,"y":8,"type":"grass","height":5},
+{"x":7,"y":8,"type":"house","height":7},
+{"x":8,"y":8,"type":"house","height":6},
+{"x":9,"y":8,"type":"road","height":4},
+{"x":10,"y":8,"type":"house","height":6},
+{"x":11,"y":8,"type":"house","height":6},
+{"x":12,"y":8,"type":"house","height":6},
+{"x":13,"y":8,"type":"house","height":5},
+{"x":14,"y":8,"type":"shop","height":5},
+{"x":15,"y":8,"type":"house","height":5},
+{"x":16,"y":8,"type":"grass","height":3},
+{"x":17,"y":8,"type":"house","height":5},
+{"x":18,"y":8,"type":"house","height":4},
+{"x":19,"y":8,"type":"grass","height":2},
+{"x":0,"y":9,"type":"road","height":6},
+{"x":1,"y":9,"type":"road","height":6},
+{"x":2,"y":9,"type":"road","height":6},
+{"x":3,"y":9,"type":"road","height":6},
+{"x":4,"y":9,"type":"road","height":5},
+{"x":5,"y":9,"type":"road","height":5},
+{"x":6,"y":9,"type":"road","height":5},
+{"x":7,"y":9,"type":"road","height":5},
+{"x":8,"y":9,"type":"road","height":5},
+{"x":9,"y":9,"type":"road","height":4},
+{"x":10,"y":9,"type":"road","height":4},
+{"x":11,"y":9,"type":"road","height":4},
+{"x":12,"y":9,"type":"road","height":4},
+{"x":13,"y":9,"type":"road","height":4},
+{"x":14,"y":9,"type":"road","height":3},
+{"x":15,"y":9,"type":"road","height":3},
+{"x":16,"y":9,"type":"road","height":3},
+{"x":17,"y":9,"type":"road","height":3},
+{"x":18,"y":9,"type":"road","height":3},
+{"x":19,"y":9,"type":"road","height":2},
+{"x":0,"y":10,"type":"shop","height":8},
+{"x":1,"y":10,"type":"park","height":6},
+{"x":2,"y":10,"type":"park","height":6},
+{"x":3,"y":10,"type":"park","height":6},
+{"x":4,"y":10,"type":"school","height":9},
+{"x":5,"y":10,"type":"grass","height":5},
+{"x":6,"y":10,"type":"grass","height":5},
+{"x":7,"y":10,"type":"house","height":7},
+{"x":8,"y":10,"type":"house","height":7},
+{"x":9,"y":10,"type":"road","height":5},
+{"x":10,"y":10,"type":"tower","height":13},
+{"x":11,"y":10,"type":"house","height":6},
+{"x":12,"y":10,"type":"shop","height":6},
+{"x":13,"y":10,"type":"house","height":6},
+{"x":14,"y":10,"type":"road","height":4},
+{"x":15,"y":10,"type":"shop","height":5},
+{"x":16,"y":10,"type":"house","height":5},
+{"x":17,"y":10,"type":"house","height":5},
+{"x":18,"y":10,"type":"office","height":8},
+{"x":19,"y":10,"type":"house","height":5},
+{"x":0,"y":11,"type":"grass","height":7},
+{"x":1,"y":11,"type":"park","height":6},
+{"x":2,"y":11,"type":"park","height":6},
+{"x":3,"y":11,"type":"park","height":6},
+{"x":4,"y":11,"type":"grass","height":6},
+{"x":5,"y":11,"type":"grass","height":6},
+{"x":6,"y":11,"type":"grass","height":5},
+{"x":7,"y":11,"type":"grass","height":5},
+{"x":8,"y":11,"type":"house","height":7},
+{"x":9,"y":11,"type":"road","height":5},
+{"x":10,"y":11,"type":"house","height":7},
+{"x":11,"y":11,"type":"grass","height":4},
+{"x":12,"y":11,"type":"grass","height":4},
+{"x":13,"y":11,"type":"house","height":6},
+{"x":14,"y":11,"type":"road","height":4},
+{"x":15,"y":11,"type":"house","height":6},
+{"x":16,"y":11,"type":"park","height":3},
+{"x":17,"y":11,"type":"park","height":3},
+{"x":18,"y":11,"type":"grass","height":3},
+{"x":19,"y":11,"type":"grass","height":3},
+{"x":0,"y":12,"type":"grass","height":7},
+{"x":1,"y":12,"type":"grass","height":7},
+{"x":2,"y":12,"type":"grass","height":6},
+{"x":3,"y":12,"type":"grass","height":6},
+{"x":4,"y":12,"type":"grass","height":6},
+{"x":5,"y":12,"type":"grass","height":6},
+{"x":6,"y":12,"type":"grass","height":6},
+{"x":7,"y":12,"type":"grass","height":5},
+{"x":8,"y":12,"type":"shop","height":7},
+{"x":9,"y":12,"type":"road","height":5},
+{"x":10,"y":12,"type":"house","height":7},
+{"x":11,"y":12,"type":"grass","height":5},
+{"x":12,"y":12,"type":"grass","height":4},
+{"x":13,"y":12,"type":"house","height":6},
+{"x":14,"y":12,"type":"road","height":4},
+{"x":15,"y":12,"type":"office","height":9},
+{"x":16,"y":12,"type":"park","height":4},
+{"x":17,"y":12,"type":"park","height":3},
+{"x":18,"y":12,"type":"grass","height":3},
+{"x":19,"y":12,"type":"grass","height":3},
+{"x":0,"y":13,"type":"house","height":9},
+{"x":1,"y":13,"type":"grass","height":7},
+{"x":2,"y":13,"type":"house","height":9},
+{"x":3,"y":13,"type":"house","height":8},
+{"x":4,"y":13,"type":"house","height":8},
+{"x":5,"y":13,"type":"grass","height":6},
+{"x":6,"y":13,"type":"shop","height":8},
+{"x":7,"y":13,"type":"house","height":8},
+{"x":8,"y":13,"type":"house","height":7},
+{"x":9,"y":13,"type":"road","height":5},
+{"x":10,"y":13,"type":"house","height":7},
+{"x":11,"y":13,"type":"house","height":7},
+{"x":12,"y":13,"type":"house","height":7},
+{"x":13,"y":13,"type":"shop","height":6},
+{"x":14,"y":13,"type":"road","height":4},
+{"x":15,"y":13,"type":"shop","height":6},
+{"x":16,"y":13,"type":"house","height":6},
+{"x":17,"y":13,"type":"house","height":6},
+{"x":18,"y":13,"type":"shop","height":5},
+{"x":19,"y":13,"type":"house","height":5},
+{"x":0,"y":14,"type":"road","height":7},
+{"x":1,"y":14,"type":"road","height":7},
+{"x":2,"y":14,"type":"road","height":7},
+{"x":3,"y":14,"type":"road","height":7},
+{"x":4,"y":14,"type":"road","height":6},
+{"x":5,"y":14,"type":"road","height":6},
+{"x":6,"y":14,"type":"road","height":6},
+{"x":7,"y":14,"type":"road","height":6},
+{"x":8,"y":14,"type":"road","height":6},
+{"x":9,"y":14,"type":"road","height":5},
+{"x":10,"y":14,"type":"road","height":5},
+{"x":11,"y":14,"type":"road","height":5},
+{"x":12,"y":14,"type":"road","height":5},
+{"x":13,"y":14,"type":"road","height":5},
+{"x":14,"y":14,"type":"road","height":4},
+{"x":15,"y":14,"type":"road","height":4},
+{"x":16,"y":14,"type":"road","height":4},
+{"x":17,"y":14,"type":"road","height":4},
+{"x":18,"y":14,"type":"road","height":4},
+{"x":19,"y":14,"type":"road","height":3},
+{"x":0,"y":15,"type":"house","height":9},
+{"x":1,"y":15,"type":"grass","height":7},
+{"x":2,"y":15,"type":"grass","height":7},
+{"x":3,"y":15,"type":"house","height":9},
+{"x":4,"y":15,"type":"house","height":9},
+{"x":5,"y":15,"type":"house","height":8},
+{"x":6,"y":15,"type":"house","height":8},
+{"x":7,"y":15,"type":"house","height":8},
+{"x":8,"y":15,"type":"house","height":8},
+{"x":9,"y":15,"type":"road","height":6},
+{"x":10,"y":15,"type":"house","height":7},
+{"x":11,"y":15,"type":"house","height":7},
+{"x":12,"y":15,"type":"house","height":7},
+{"x":13,"y":15,"type":"house","height":7},
+{"x":14,"y":15,"type":"road","height":5},
+{"x":15,"y":15,"type":"house","height":6},
+{"x":16,"y":15,"type":"house","height":6},
+{"x":17,"y":15,"type":"house","height":6},
+{"x":18,"y":15,"type":"shop","height":6},
+{"x":19,"y":15,"type":"office","height":9},
+{"x":0,"y":16,"type":"grass","height":8},
+{"x":1,"y":16,"type":"grass","height":7},
+{"x":2,"y":16,"type":"grass","height":7},
+{"x":3,"y":16,"type":"grass","height":7},
+{"x":4,"y":16,"type":"grass","height":7},
+{"x":5,"y":16,"type":"grass","height":7},
+{"x":6,"y":16,"type":"grass","height":6},
+{"x":7,"y":16,"type":"grass","height":6},
+{"x":8,"y":16,"type":"grass","height":6},
+{"x":9,"y":16,"type":"road","height":6},
+{"x":10,"y":16,"type":"house","height":8},
+{"x":11,"y":16,"type":"grass","height":5},
+{"x":12,"y":16,"type":"grass","height":5},
+{"x":13,"y":16,"type":"house","height":7},
+{"x":14,"y":16,"type":"road","height":5},
+{"x":15,"y":16,"type":"house","height":7},
+{"x":16,"y":16,"type":"grass","height":4},
+{"x":17,"y":16,"type":"grass","height":4},
+{"x":18,"y":16,"type":"grass","height":4},
+{"x":19,"y":16,"type":"grass","height":4},
+{"x":0,"y":17,"type":"grass","height":8},
+{"x":1,"y":17,"type":"grass","height":8},
+{"x":2,"y":17,"type":"grass","height":7},
+{"x":3,"y":17,"type":"grass","height":7},
+{"x":4,"y":17,"type":"grass","height":7},
+{"x":5,"y":17,"type":"grass","height":7},
+{"x":6,"y":17,"type":"grass","height":7},
+{"x":7,"y":17,"type":"grass","height":6},
+{"x":8,"y":17,"type":"house","height":8},
+{"x":9,"y":17,"type":"road","height":6},
+{"x":10,"y":17,"type":"house","height":8},
+{"x":11,"y":17,"type":"grass","height":6},
+{"x":12,"y":17,"type":"grass","height":5},
+{"x":13,"y":17,"type":"house","height":7},
+{"x":14,"y":17,"type":"road","height":5},
+{"x":15,"y":17,"type":"office","height":10},
+{"x":16,"y":17,"type":"grass","height":5},
+{"x":17,"y":17,"type":"grass","height":4},
+{"x":18,"y":17,"type":"grass","height":4},
+{"x":19,"y":17,"type":"grass","height":4},
+{"x":0,"y":18,"type":"grass","height":8},
+{"x":1,"y":18,"type":"grass","height":8},
+{"x":2,"y":18,"type":"grass","height":8},
+{"x":3,"y":18,"type":"grass","height":7},
+{"x":4,"y":18,"type":"grass","height":7},
+{"x":5,"y":18,"type":"grass","height":7},
+{"x":6,"y":18,"type":"grass","height":7},
+{"x":7,"y":18,"type":"grass","height":7},
+{"x":8,"y":18,"type":"house","height":8},
+{"x":9,"y":18,"type":"road","height":6},
+{"x":10,"y":18,"type":"house","height":8},
+{"x":11,"y":18,"type":"grass","height":6},
+{"x":12,"y":18,"type":"grass","height":6},
+{"x":13,"y":18,"type":"grass","height":5},
+{"x":14,"y":18,"type":"road","height":5},
+{"x":15,"y":18,"type":"house","height":7},
+{"x":16,"y":18,"type":"grass","height":5},
+{"x":17,"y":18,"type":"grass","height":5},
+{"x":18,"y":18,"type":"grass","height":4},
+{"x":19,"y":18,"type":"grass","height":4},
+{"x":0,"y":19,"type":"grass","height":8},
+{"x":1,"y":19,"type":"grass","height":8},
+{"x":2,"y":19,"type":"grass","height":8},
+{"x":3,"y":19,"type":"grass","height":8},
+{"x":4,"y":19,"type":"grass","height":7},
+{"x":5,"y":19,"type":"grass","height":7},
+{"x":6,"y":19,"type":"grass","height":7},
+{"x":7,"y":19,"type":"grass","height":7},
+{"x":8,"y":19,"type":"grass","height":7},
+{"x":9,"y":19,"type":"road","height":6},
+{"x":10,"y":19,"type":"house","height":8},
+{"x":11,"y":19,"type":"grass","height":6},
+{"x":12,"y":19,"type":"grass","height":6},
+{"x":13,"y":19,"type":"house","height":8},
+{"x":14,"y":19,"type":"road","height":5},
+{"x":15,"y":19,"type":"house","height":7},
+{"x":16,"y":19,"type":"grass","height":5},
+{"x":17,"y":19,"type":"grass","height":5},
+{"x":18,"y":19,"type":"grass","height":5},
+{"x":19,"y":19,"type":"grass","height":4}
+]
+</script>
+
+<script>
+(() => {
+  'use strict';
+
+  const N = 20;
+  // Floors added on top of ground elevation. JSON height = ground + floors.
+  const FLOORS = { grass: 0, road: 0, river: 0, bridge: 0, park: 0, school: 3, hospital: 4, fire_station: 3, house: 2, shop: 2, office: 5, tower: 9 };
+  const NAMES = { grass: 'Grass', road: 'Road', river: 'River', bridge: 'Bridge', park: 'Park', school: 'School', hospital: 'Hospital', fire_station: 'Fire station', house: 'House', shop: 'Shop', office: 'Office block', tower: 'Tower' };
+  const COL = {
+    grass: [118, 170, 84], road: [70, 74, 84], river: [36, 104, 168], bridge: [150, 108, 66], park: [92, 176, 92],
+    school: [240, 200, 96], hospital: [246, 246, 250], fire_station: [198, 64, 54], house: [234, 210, 170],
+    shop: [120, 170, 214], office: [156, 170, 190], tower: [100, 122, 156]
+  };
+  const ROOF = { house: [178, 66, 52], shop: [96, 100, 112], office: [112, 124, 140], tower: [72, 84, 104], school: [200, 124, 44], hospital: [250, 250, 252], fire_station: [150, 42, 38] };
+  const EARTH = [132, 100, 70];
+  const WOOD = COL.bridge;
+  const CAR_COLORS = ['#f2f2f2', '#d64545', '#3b7dd8', '#f0b429', '#2fb37a'];
+  const LEGEND = ['grass', 'road', 'river', 'bridge', 'park', 'house', 'shop', 'office', 'school', 'hospital', 'fire_station', 'tower'];
+
+  // ---------- map data ----------
+  const MAP = JSON.parse(document.getElementById('map').textContent);
+  const T = Array.from({ length: N }, () => new Array(N));
+  for (const tl of MAP) T[tl.x][tl.y] = tl;
+
+  const inside = (x, y) => x >= 0 && y >= 0 && x < N && y < N;
+  const typeAt = (x, y) => (inside(x, y) ? T[x][y].type : null);
+  const roadish = (x, y) => typeAt(x, y) === 'road' || typeAt(x, y) === 'bridge';
+  const nb = (x, y) => [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]].filter(([a, b]) => inside(a, b));
+  const findType = type => MAP.find(tl => tl.type === type);
+  const HOSP = findType('hospital');
+  const FIRE = findType('fire_station');
+
+  // Road routes to the hospital, with and without bridges
+  function reachFrom(start, useBridge) {
+    const ok = (a, b) => typeAt(a, b) === 'road' || (useBridge && typeAt(a, b) === 'bridge');
+    const seen = new Set(), q = [];
+    for (const [a, b] of nb(start.x, start.y)) if (ok(a, b)) { seen.add(a * N + b); q.push([a, b]); }
+    while (q.length) {
+      const [x, y] = q.shift();
+      for (const [a, b] of nb(x, y)) if (ok(a, b) && !seen.has(a * N + b)) { seen.add(a * N + b); q.push([a, b]); }
+    }
+    return seen;
+  }
+  const ROUTE_DIRECT = reachFrom(HOSP, false);
+  const ROUTE_BRIDGE = reachFrom(HOSP, true);
+  const touches = (set, x, y) => nb(x, y).some(([a, b]) => set.has(a * N + b));
+
+  // River flow: distance from the north entry, and the downstream step for each water tile
+  const FLOW = Array.from({ length: N }, () => new Array(N).fill(null));
+  {
+    const water = (x, y) => typeAt(x, y) === 'river' || typeAt(x, y) === 'bridge';
+    const entry = MAP.find(tl => tl.y === 0 && (tl.type === 'river' || tl.type === 'bridge'));
+    const dist = new Map([[entry.x * N + entry.y, 0]]);
+    const q = [[entry.x, entry.y]];
+    while (q.length) {
+      const [x, y] = q.shift();
+      for (const [a, b] of nb(x, y)) if (water(a, b) && !dist.has(a * N + b)) { dist.set(a * N + b, dist.get(x * N + y) + 1); q.push([a, b]); }
+    }
+    for (const [key, d] of dist) {
+      const x = Math.floor(key / N), y = key % N;
+      const next = nb(x, y).find(([a, b]) => dist.get(a * N + b) === d + 1);
+      FLOW[x][y] = { dist: d, dx: next ? next[0] - x : 0, dy: next ? next[1] - y : 0 };
+    }
+  }
+
+  // ---------- projection ----------
+  const cv = document.getElementById('town');
+  const ctx = cv.getContext('2d');
+  let W = 0, H = 0, HW = 20, HH = 10, ZH = 8, CX = 0, CY = 0;
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    HW = Math.max(6, Math.min(W / 44, (H - 90) / 24));
+    HH = HW / 2; ZH = HW * 0.42;
+    CX = W / 2; CY = H / 2 - 20 * HH + 6.5 * ZH;
+  }
+  const P = (x, y, z) => [CX + (x - y) * HW, CY + (x + y) * HH - z * ZH];
+  const diamond = (x, y, z) => [P(x, y, z), P(x + 1, y, z), P(x + 1, y + 1, z), P(x, y + 1, z)];
+
+  // ---------- drawing helpers ----------
+  let K = 1, night = false, paused = false, clock = 0, hover = null;
+  const clamp = v => Math.max(0, Math.min(255, Math.round(v)));
+  const rgb = (c, f = 1, a = 1) => `rgba(${clamp(c[0] * f * K)},${clamp(c[1] * f * K)},${clamp(c[2] * f * K)},${a})`;
+  const raw = (c, a = 1) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+  const hash = (a, b, c = 0) => {
+    let h = Math.imul(a + 1, 374761393) ^ Math.imul(b + 7, 668265263) ^ Math.imul(c + 3, 2246822519);
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
+  };
+  function fillPoly(pts, fill) {
+    ctx.beginPath();
+    ctx.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+    ctx.closePath();
+    ctx.fillStyle = fill; ctx.fill();
+    ctx.strokeStyle = fill; ctx.lineWidth = 0.6; ctx.stroke(); // hides hairline seams between faces
+  }
+  function strokePoly(pts) {
+    ctx.beginPath();
+    ctx.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(255,255,255,0.95)'; ctx.lineWidth = 2; ctx.stroke();
+  }
+  function line(a, b, color, width, dash = []) {
+    ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]);
+    ctx.strokeStyle = color; ctx.lineWidth = width; ctx.lineCap = 'round';
+    ctx.setLineDash(dash); ctx.stroke(); ctx.setLineDash([]);
+  }
+  // Box between two corners, with a south face (left on screen), east face (right) and top
+  function prism(x0, y0, x1, y1, z0, z1, wall, top) {
+    if (z1 > z0) {
+      fillPoly([P(x0, y1, z0), P(x1, y1, z0), P(x1, y1, z1), P(x0, y1, z1)], rgb(wall, 0.7));
+      fillPoly([P(x1, y0, z0), P(x1, y1, z0), P(x1, y1, z1), P(x1, y0, z1)], rgb(wall, 0.88));
+    }
+    fillPoly([P(x0, y0, z1), P(x1, y0, z1), P(x1, y1, z1), P(x0, y1, z1)], rgb(top, 1));
+  }
+  const box = (x, y, z0, z1, wall, top) => prism(x, y, x + 1, y + 1, z0, z1, wall, top);
+
+  function windows(x, y, z0, floors, t) {
+    for (let i = 0; i < floors; i++) {
+      const zb = z0 + i + 0.3, zt = zb + 0.42;
+      for (let k = 0; k < 2; k++) {
+        const u = 0.18 + k * 0.42;
+        const r = hash(x, y, i * 2 + k);
+        const lit = r > 0.45;
+        const glow = night ? 1 : 0.55 + 0.25 * Math.sin(t * (1 + r) * 2 + i);
+        const color = lit ? raw([255, 220, 140], glow) : raw([58, 78, 104], 1);
+        fillPoly([P(x + 1, y + u, zb), P(x + 1, y + u + 0.24, zb), P(x + 1, y + u + 0.24, zt), P(x + 1, y + u, zt)], color);
+        fillPoly([P(x + u, y + 1, zb), P(x + u + 0.24, y + 1, zb), P(x + u + 0.24, y + 1, zt), P(x + u, y + 1, zt)], color);
+      }
+    }
+  }
+
+  function tree(wx, wy, z, seed, t, s = 1) {
+    const [bx, by] = P(wx, wy, z);
+    const sway = Math.sin(t * 1.6 + seed) * HW * 0.04 * s;
+    ctx.fillStyle = rgb([96, 70, 46]);
+    ctx.fillRect(bx - HW * 0.04 * s, by - HW * 0.3 * s, HW * 0.08 * s, HW * 0.3 * s);
+    ctx.beginPath(); ctx.arc(bx + sway, by - HW * 0.55 * s, HW * 0.32 * s, 0, Math.PI * 2);
+    ctx.fillStyle = rgb([58, 128, 62]); ctx.fill();
+  }
+
+  function pitched(x, y, z, c) {
+    const apex = P(x + 0.5, y + 0.5, z + 1.2);
+    fillPoly([P(x, y + 1, z), P(x + 1, y + 1, z), apex], rgb(c, 0.8));
+    fillPoly([P(x + 1, y, z), P(x + 1, y + 1, z), apex], rgb(c, 0.95));
+  }
+
+  function antenna(x, y, h, t) {
+    const a = P(x + 0.5, y + 0.5, h), b = P(x + 0.5, y + 0.5, h + 2.6);
+    line(a, b, rgb([60, 66, 78]), Math.max(1, HW * 0.05));
+    ctx.beginPath(); ctx.arc(b[0], b[1], HW * 0.08, 0, Math.PI * 2);
+    ctx.fillStyle = raw([255, 70, 70], 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(t * 3))); ctx.fill();
+  }
+
+  function flag(x, y, h, t) {
+    const base = P(x + 0.2, y + 0.2, h), top = P(x + 0.2, y + 0.2, h + 2.0);
+    line(base, top, rgb([107, 91, 74]), Math.max(1, HW * 0.05));
+    const w = HW * 0.55, wave = Math.sin(t * 5) * HW * 0.05;
+    fillPoly([top, [top[0] + w, top[1] + HW * 0.1 + wave], [top[0] + w * 0.9, top[1] + HW * 0.34 + wave * 0.5], [top[0], top[1] + HW * 0.3]], raw([232, 72, 58]));
+  }
+
+  function building(x, y, g, h, ty, t) {
+    const wall = COL[ty], roof = ROOF[ty] || wall;
+    box(x, y, g, h, wall, roof);
+    windows(x, y, g, FLOORS[ty], t);
+    if (ty === 'house') pitched(x, y, h, roof);
+    if (ty === 'hospital') {
+      const c = [222, 56, 56];
+      fillPoly([P(x + 0.42, y + 0.16, h), P(x + 0.58, y + 0.16, h), P(x + 0.58, y + 0.84, h), P(x + 0.42, y + 0.84, h)], rgb(c));
+      fillPoly([P(x + 0.16, y + 0.42, h), P(x + 0.84, y + 0.42, h), P(x + 0.84, y + 0.58, h), P(x + 0.16, y + 0.58, h)], rgb(c));
+    }
+    if (ty === 'tower') antenna(x, y, h, t);
+    if (ty === 'school') flag(x, y, h, t);
+    if (ty === 'fire_station') prism(x + 0.3, y + 0.3, x + 0.7, y + 0.7, h, h + 1.1, [190, 50, 44], [120, 30, 28]);
+  }
+
+  function roadMarks(x, y, z) {
+    const c = raw([255, 255, 255], 0.55), w = Math.max(1, HW * 0.05), dash = [HW * 0.16, HW * 0.2];
+    if (roadish(x - 1, y) || roadish(x + 1, y)) line(P(x, y + 0.5, z + 0.02), P(x + 1, y + 0.5, z + 0.02), c, w, dash);
+    if (roadish(x, y - 1) || roadish(x, y + 1)) line(P(x + 0.5, y, z + 0.02), P(x + 0.5, y + 1, z + 0.02), c, w, dash);
+  }
+
+  function drawBridge(x, y, h) {
+    box(x, y, h - 0.4, h, WOOD, [176, 130, 86]);
+    const rail = rgb([84, 60, 40]), w = Math.max(1, HW * 0.05), z = h + 0.22;
+    if (roadish(x - 1, y) || roadish(x + 1, y)) {
+      line(P(x, y + 0.1, z), P(x + 1, y + 0.1, z), rail, w);
+      line(P(x, y + 0.9, z), P(x + 1, y + 0.9, z), rail, w);
+    } else {
+      line(P(x + 0.1, y, z), P(x + 0.1, y + 1, z), rail, w);
+      line(P(x + 0.9, y, z), P(x + 0.9, y + 1, z), rail, w);
+    }
+  }
+
+  function drawWater(x, y, t) {
+    const shade = 1 + 0.06 * Math.sin(t * 1.4 + x * 0.9 + y * 0.7);
+    fillPoly(diamond(x, y, 0), rgb(COL.river, shade));
+    const fl = FLOW[x][y];
+    if (fl && (fl.dx || fl.dy)) {
+      const frac = (((t * 0.5 - fl.dist * 0.15) % 1) + 1) % 1;
+      const off = (frac - 0.5) * 0.8;
+      const cx = x + 0.5 + fl.dx * off, cy = y + 0.5 + fl.dy * off;
+      const a = P(cx - fl.dx * 0.12, cy - fl.dy * 0.12, 0.02), b = P(cx + fl.dx * 0.12, cy + fl.dy * 0.12, 0.02);
+      line(a, b, raw([220, 240, 255], 0.55 * (1 - Math.abs(frac - 0.5) * 2)), Math.max(1, HW * 0.07));
+    }
+  }
+
+  function drawTile(x, y, t) {
+    const tl = T[x][y], ty = tl.type, h = tl.height, f = FLOORS[ty], g = h - f;
+    if (ty === 'river') return drawWater(x, y, t);
+    if (ty === 'bridge') return drawBridge(x, y, h);
+    box(x, y, 0, g, EARTH, COL[ty]);
+    if (ty === 'road') roadMarks(x, y, g);
+    if (ty === 'grass' && hash(x, y, 21) < 0.3) {
+      tree(x + 0.25 + hash(x, y, 22) * 0.5, y + 0.25 + hash(x, y, 23) * 0.5, g, hash(x, y, 24) * 6, t, 0.6);
+    }
+    if (ty === 'park') {
+      for (const [dx, dy] of [[0.25, 0.3], [0.7, 0.25], [0.45, 0.7]]) tree(x + dx, y + dy, g, x * 3 + y + dx * 5, t, 0.8);
+    }
+    if (f > 0) building(x, y, g, h, ty, t);
+  }
+
+  // ---------- cars ----------
+  const cars = [];
+  const roadTiles = [];
+  for (let x = 0; x < N; x++) for (let y = 0; y < N; y++) if (roadish(x, y)) roadTiles.push([x, y]);
+  function nextTile(x, y, prev) {
+    const opts = nb(x, y).filter(([a, b]) => roadish(a, b));
+    const fwd = opts.filter(([a, b]) => !prev || a !== prev[0] || b !== prev[1]);
+    const pool = fwd.length ? fwd : opts;
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+  function spawnCars(n) {
+    for (let i = 0; i < n; i++) {
+      const [x, y] = roadTiles[Math.floor(Math.random() * roadTiles.length)];
+      cars.push({ a: [x, y], b: nextTile(x, y, null), p: Math.random(), v: 0.6 + Math.random() * 0.6, color: CAR_COLORS[i % CAR_COLORS.length] });
+    }
+  }
+  function updateCars(dt) {
+    for (const c of cars) {
+      c.p += dt * c.v;
+      if (c.p >= 1) { c.p -= 1; const prev = c.a; c.a = c.b; c.b = nextTile(c.a[0], c.a[1], prev); }
+    }
+  }
+  function drawCar(c) {
+    const [ax, ay] = c.a, [bx, by] = c.b;
+    const dx = bx - ax, dy = by - ay;
+    const px = ax + 0.5 + dx * c.p - dy * 0.18, py = ay + 0.5 + dy * c.p + dx * 0.18; // drive on the right lane
+    const z = T[ax][ay].height + (T[bx][by].height - T[ax][ay].height) * c.p + 0.12;
+    const a = P(px - dx * 0.2, py - dy * 0.2, z), b = P(px + dx * 0.2, py + dy * 0.2, z);
+    line([a[0], a[1] + 1.5], [b[0], b[1] + 1.5], raw([0, 0, 0], 0.25), HW * 0.2);
+    line(a, b, c.color, HW * 0.16);
+  }
+
+  // ---------- smoke from the fire station ----------
+  const smoke = [];
+  let smokeTimer = 0;
+  function updateSmoke(dt) {
+    smokeTimer += dt;
+    if (smokeTimer > 0.35) {
+      smokeTimer = 0;
+      smoke.push({ x: FIRE.x + 0.5, y: FIRE.y + 0.5, z: FIRE.height + 1.2, age: 0, life: 3.2 });
+    }
+    for (const p of smoke) p.age += dt;
+    while (smoke.length && smoke[0].age > smoke[0].life) smoke.shift();
+  }
+  function drawSmoke() {
+    for (const p of smoke) {
+      const [sx, sy] = P(p.x + p.age * 0.12, p.y + p.age * 0.08, p.z + p.age * 0.5);
+      ctx.beginPath();
+      ctx.arc(sx, sy, HW * (0.18 + p.age * 0.22), 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(245,245,248,${0.45 * (1 - p.age / p.life)})`;
+      ctx.fill();
+    }
+  }
+
+  // ---------- sky ----------
+  const clouds = Array.from({ length: 6 }, (_, i) => ({ x: hash(i, 1), y: 0.06 + hash(i, 2) * 0.28, s: 0.7 + hash(i, 3) * 0.9, v: 0.003 + hash(i, 4) * 0.006 }));
+  function drawClouds(t) {
+    ctx.fillStyle = night ? 'rgba(160,180,220,0.06)' : 'rgba(255,255,255,0.55)';
+    for (const c of clouds) {
+      const x = ((c.x + t * c.v) % 1.3 - 0.15) * W, y = c.y * H;
+      ctx.beginPath(); ctx.ellipse(x, y, 90 * c.s, 26 * c.s, 0, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  // ---------- frame ----------
+  function drawScene(t) {
+    K = night ? 0.6 : 1;
+    const sky = ctx.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, night ? '#0b1426' : '#7fb8e6');
+    sky.addColorStop(1, night ? '#1d2d4a' : '#d6eef9');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+    drawClouds(t);
+
+    const carsAt = new Map();
+    for (const c of cars) {
+      const k = c.a[0] * N + c.a[1];
+      if (!carsAt.has(k)) carsAt.set(k, []);
+      carsAt.get(k).push(c);
+    }
+    // Painter's order: back to front by x + y
+    for (let s = 0; s <= 2 * (N - 1); s++) {
+      for (let x = 0; x < N; x++) {
+        const y = s - x;
+        if (y < 0 || y >= N) continue;
+        drawTile(x, y, t);
+        const list = carsAt.get(x * N + y);
+        if (list) for (const c of list) drawCar(c);
+      }
+    }
+    drawSmoke();
+    if (hover) strokePoly(diamond(hover[0], hover[1], T[hover[0]][hover[1]].height));
+    K = 1;
+  }
+
+  // ---------- hover ----------
+  function inPoly(px, py, pts) {
+    let hit = false;
+    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      const [xi, yi] = pts[i], [xj, yj] = pts[j];
+      if ((yi > py) !== (yj > py) && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi) hit = !hit;
+    }
+    return hit;
+  }
+  function hitTile(mx, my) {
+    for (let s = 2 * (N - 1); s >= 0; s--) {
+      for (let x = N - 1; x >= 0; x--) {
+        const y = s - x;
+        if (y < 0 || y >= N) continue;
+        const h = T[x][y].height;
+        if (inPoly(mx, my, diamond(x, y, h)) ||
+            inPoly(mx, my, [P(x, y + 1, 0), P(x + 1, y + 1, 0), P(x + 1, y + 1, h), P(x, y + 1, h)]) ||
+            inPoly(mx, my, [P(x + 1, y, 0), P(x + 1, y + 1, 0), P(x + 1, y + 1, h), P(x + 1, y, h)])) return [x, y];
+      }
+    }
+    return null;
+  }
+
+  const info = document.getElementById('info');
+  let lastKey = '';
+  function showInfo() {
+    const key = hover ? hover.join(',') : '';
+    if (key === lastKey) return;
+    lastKey = key;
+    if (!hover) { info.textContent = 'Hover over the town to inspect a tile.'; return; }
+    const [x, y] = hover, tl = T[x][y];
+    const lines = [NAMES[tl.type], `Tile (${x}, ${y})`, `Height ${tl.height} levels`];
+    if (tl.type === 'house') {
+      lines.push(touches(ROUTE_DIRECT, x, y) ? 'Hospital: reachable by road'
+        : touches(ROUTE_BRIDGE, x, y) ? 'Hospital: needs a bridge' : 'Hospital: no route');
+    }
+    info.textContent = lines.join('\n');
+  }
+
+  // ---------- controls and legend ----------
+  const legend = document.getElementById('legend');
+  for (const type of LEGEND) {
+    const item = document.createElement('div');
+    const swatch = document.createElement('span');
+    swatch.style.background = `rgb(${COL[type].join(',')})`;
+    item.appendChild(swatch);
+    item.appendChild(document.createTextNode(NAMES[type]));
+    legend.appendChild(item);
+  }
+  const pauseBtn = document.getElementById('pause');
+  const nightBtn = document.getElementById('night');
+  pauseBtn.addEventListener('click', () => { paused = !paused; pauseBtn.textContent = paused ? 'Play' : 'Pause'; });
+  nightBtn.addEventListener('click', () => { night = !night; nightBtn.textContent = night ? 'Day' : 'Night'; });
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    paused = true; pauseBtn.textContent = 'Play';
+  }
+  cv.addEventListener('pointermove', e => { hover = hitTile(e.clientX, e.clientY); showInfo(); });
+  cv.addEventListener('pointerleave', () => { hover = null; showInfo(); });
+
+  // ---------- loop ----------
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!paused) { clock += dt; updateCars(dt); updateSmoke(dt); }
+    drawScene(clock);
+    requestAnimationFrame(frame);
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+  spawnCars(18);
+  showInfo();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
